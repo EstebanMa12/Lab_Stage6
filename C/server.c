@@ -1,64 +1,119 @@
-  //  - Write a C program for the server to listen on a specified port for incoming TCP connections.
-  //  - The server should be able to handle multiple client connections and relay messages received from one client to all other connected clients.
-
+//  - Write a C program for the server to listen on a specified port for incoming TCP connections.
+//  - The server should be able to handle multiple client connections and relay messages received from one client to all other connected clients.
 
 #include "lab.h"
 #include <ctype.h>
+#include <stdlib.h>
 
 #define PORT 8080
 
+int main()
+{
+  printf("Configuring local address...\n");
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
 
-int main(){
-//     int server_fd, new_socket, valread;
-//     struct sockaddr_in address;
-//     int opt = 1;
-//     int addrlen = sizeof(address);
+    struct addrinfo *bind_address;
+    getaddrinfo(0, "8080", &hints, &bind_address);
 
-//     char buffer[1024] = {0};
-//     char *hello = "Hello from server";
 
-//     // Creating socket file descriptor
-//     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0){
-//         perror("socket failed");
-//         exit(EXIT_FAILURE);
-//     }
+    printf("Creating socket...\n");
+    SOCKET socket_listen;
+    socket_listen = socket(bind_address->ai_family,
+            bind_address->ai_socktype, bind_address->ai_protocol);
+    if (!ISVALIDSOCKET(socket_listen)) {
+        fprintf(stderr, "socket() failed. (%d)\n", GETSOCKETERRNO());
+        return 1;
+    }
 
-//     // Forcefully attaching socket to the port 8080
-//     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT,&opt, sizeof(opt))){
-//         perror("setsockopt");
-//         exit(EXIT_FAILURE);
-//     }
 
-//     address.sin_family = AF_INET;
-//     address.sin_addr.s_addr = INADDR_ANY;
+    printf("Binding socket to local address...\n");
+    if (bind(socket_listen,
+                bind_address->ai_addr, bind_address->ai_addrlen)) {
+        fprintf(stderr, "bind() failed. (%d)\n", GETSOCKETERRNO());
+        return 1;
+    }
+    freeaddrinfo(bind_address);
 
-//     // Port number is passed as an argument
-//     address.sin_port = htons( PORT );
 
-//     // Forcefully attaching socket to the port 8080
-//     if (bind(server_fd, (struct sockaddr *)&address,sizeof(address))<0){
-//         perror("bind failed");
-//         exit(EXIT_FAILURE);
-//     }
+    printf("Listening...\n");
+    if (listen(socket_listen, 10) < 0) {
+        fprintf(stderr, "listen() failed. (%d)\n", GETSOCKETERRNO());
+        return 1;
+    }
 
-//     // Server listens for incoming connections
-//     if (listen(server_fd, 3) < 0){
-//         perror("listen");
-//         exit(EXIT_FAILURE);
-//     }
+    fd_set master;
+    FD_ZERO(&master);
+    FD_SET(socket_listen, &master);
+    SOCKET max_socket = socket_listen;
 
-//     // Accepts incoming connections
-//     if ((new_socket = accept(server_fd, (struct sockaddr *)&address,(socklen_t*)&addrlen))<0){
-//         perror("accept");
-//         exit(EXIT_FAILURE);
-//     }
+    printf("Waiting for connections...\n");
 
-//     // Reads incoming messages
-//     valread = read( new_socket , buffer, 1024);
-//     printf("%s\n",buffer );
 
-//     // Sends message to client
-//     send(new_socket , hello , strlen(hello) , 0 );
-//     printf("Hello message sent\n");
-//     return 0;
-// }
+    while(1) {
+        fd_set reads;
+        reads = master;
+        if (select(max_socket+1, &reads, 0, 0, 0) < 0) {
+            fprintf(stderr, "select() failed. (%d)\n", GETSOCKETERRNO());
+            return 1;
+        }
+
+        SOCKET i;
+        for(i = 1; i <= max_socket; ++i) {
+            if (FD_ISSET(i, &reads)) {
+
+                if (i == socket_listen) {
+                    struct sockaddr_storage client_address;
+                    socklen_t client_len = sizeof(client_address);
+                    SOCKET socket_client = accept(socket_listen,
+                            (struct sockaddr*) &client_address,
+                            &client_len);
+                    if (!ISVALIDSOCKET(socket_client)) {
+                        fprintf(stderr, "accept() failed. (%d)\n",
+                                GETSOCKETERRNO());
+                        return 1;
+                    }
+
+                    FD_SET(socket_client, &master);
+                    if (socket_client > max_socket)
+                        max_socket = socket_client;
+
+                    char address_buffer[100];
+                    getnameinfo((struct sockaddr*)&client_address,
+                            client_len,
+                            address_buffer, sizeof(address_buffer), 0, 0,
+                            NI_NUMERICHOST);
+                    printf("New connection from %s\n", address_buffer);
+
+                } else {
+                    char read[1024];
+                    int bytes_received = recv(i, read, 1024, 0);
+                    if (bytes_received < 1) {
+                        FD_CLR(i, &master);
+                        CLOSESOCKET(i);
+                        continue;
+                    }
+
+                    SOCKET j;
+                    for (j = 1; j <= max_socket; ++j) {
+                        if (FD_ISSET(j, &master)) {
+                            if (j == socket_listen || j == i)
+                                continue;
+                            else
+                                send(j, read, bytes_received, 0);
+                        }
+                    }
+                }
+            } //if FD_ISSET
+        } //for i to max_socket
+    } //while(1)
+
+    printf("Closing listening socket...\n");
+    CLOSESOCKET(socket_listen);
+
+    printf("Finished.\n");
+    return 0;
+}
