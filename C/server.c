@@ -5,7 +5,16 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#define PORT 8080
+#define PORT "8080"
+#define MAX_CLIENTS 10
+#define ADDR_BUFFER_SIZE 100
+#define MESSAGE_SIZE 1024
+ 
+struct ClientInfo{
+    char address[ADDR_BUFFER_SIZE];
+    SOCKET socket;
+};  
+
 
 int main()
 {
@@ -58,7 +67,14 @@ int main()
     FD_SET(socket_listen, &master);
     SOCKET max_socket = socket_listen;
 
-    // Crea
+    struct ClientInfo clients[MAX_CLIENTS];
+
+    for (int i = 0; i < MAX_CLIENTS; i++)
+    {
+        clients[i].socket =0;
+        memset(clients[i].address,0,ADDR_BUFFER_SIZE);
+    }
+    
 
     printf("Waiting for connections...\n");
 
@@ -107,26 +123,40 @@ int main()
                 }
                 else
                 {
-                    char read[1024];
-                    int bytes_received = recv(i, read, 1024, 0);// Se leen los datos
+                    char read[MESSAGE_SIZE];
+                    memset(read, 0, MESSAGE_SIZE);
+                    int bytes_received = recv(i, read,MESSAGE_SIZE, 0);// Se leen los datos
                     if (bytes_received < 1)// Se comprueba si la recepción fue exitosa
                     {
                         FD_CLR(i, &master);// Si no se reciben datos, se elimina el descriptor 
+                        printf("Ingresa aquí");
                         CLOSESOCKET(i);// Y se cierra el socket
                         continue;
-                    }
+                    }else{
 
-                    SOCKET j; // Por el contrario, si se recibieron datos, se envian a todos los otros clientes conectados. 
-                    for (j = 1; j <= max_socket; ++j)
-                    {
-                        if (FD_ISSET(j, &master))
+                        if (strlen(clients[i].address) == 0) {
+                        struct sockaddr_storage client_address;
+                        socklen_t client_len = sizeof(client_address);
+                        getpeername(i, (struct sockaddr*)&client_address, &client_len);
+                        inet_ntop(AF_INET, &(((struct sockaddr_in*)&client_address)->sin_addr),
+                                  clients[i].address, ADDR_BUFFER_SIZE);
+                        }
+                        char message_with_address[MESSAGE_SIZE + ADDR_BUFFER_SIZE + 2];  // +2 for separating space and null terminator
+                        snprintf(message_with_address, sizeof(message_with_address), "%s: %s", clients[i].address, read);
+
+                        SOCKET j; // Por el contrario, si se recibieron datos, se envian a todos los otros clientes conectados. 
+                        for (j = 1; j <= max_socket; ++j)
                         {
-                            if (j == socket_listen || j == i)
-                                continue;
-                            else
-                                send(j, read, bytes_received, 0);
+                            if (FD_ISSET(j, &master))
+                            {
+                                if (j == socket_listen || j == i)
+                                    continue;
+                                else
+                                    send(j, message_with_address, strlen(message_with_address), 0);
+                            }
                         }
                     }
+
                 }
             } // if FD_ISSET
         }     // for i to max_socket
