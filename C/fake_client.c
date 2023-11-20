@@ -118,9 +118,15 @@ void create_data_packet(struct sockaddr_in* src, struct sockaddr_in* dst, int32_
 }
 
 int main (int argc, char** argv){
-  //Configuration source
+  
+  
+  //Configuration 
+  uint32_t  seq_num, ack_num;
   int source_port = 443;
   int identification = 53826;
+  seq_num = 0;
+  ack_num = 0;
+
 
   if (argc != 4){
     printf("Invalid parameters. \n");
@@ -138,8 +144,8 @@ int main (int argc, char** argv){
   //Destination IP address configuration
   struct sockaddr_in dst;
   dst.sin_family = AF_INET;
-  dst.sin_port = htons(atoi(argv[3]));
-  
+  dst.sin_port = htons(atoi(argv[3]));  
+
   // if (inet_pton(AF_INET, SOCK_RAW, IPPROTO_TCP) !=1)
   if (inet_pton(AF_INET, argv[2], &dst.sin_addr) != 1)
   {
@@ -173,7 +179,7 @@ int main (int argc, char** argv){
   int packet_len;
   int sent;
 
-  create_data_packet(&src, &dst, 0, 0, data, data_len, &packet, &packet_len,identification);
+  create_data_packet(&src, &dst, seq_num, ack_num, data, data_len, &packet, &packet_len, identification);
   if ((sent = sendto(sock, packet, packet_len,0, (struct sockaddr*)&dst, sizeof(struct sockaddr)))==-1){
     perror("sendto() error");
     return 1;
