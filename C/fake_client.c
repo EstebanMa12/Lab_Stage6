@@ -110,10 +110,10 @@ int main (int argc, char** argv){
   
   //Configuration 
   uint32_t  seq_num, ack_num;
-  int source_port = 443;
-  int identification = 53826;
-  seq_num = 0;
-  ack_num = 0;
+  int source_port = 36970;
+  int identification = 37184;
+  seq_num = 3102899410+5;
+  ack_num = 3484041517;
 
 
   if (argc != 4){
