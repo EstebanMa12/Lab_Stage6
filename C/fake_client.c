@@ -100,8 +100,8 @@ void create_data_packet(struct sockaddr_in* src, struct sockaddr_in* dst, int32_
 	*out_packet = datagram;
 	*out_packet_len = iph->tot_len;
 	free(pseudogram);
-  free(datagram);
-  free(*out_packet);
+  // free(datagram);
+  // free(*out_packet);
 
 }
 
@@ -151,7 +151,7 @@ int main (int argc, char** argv){
     return 1;
   }
 
-  printf("Selected source port number: %d\n", ntohs(src.sin_port));
+  printf("Selected source port number: %d\n", htons(src.sin_port));
 
   int one =1;
   const int *val = &one;
