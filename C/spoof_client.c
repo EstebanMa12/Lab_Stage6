@@ -121,4 +121,68 @@ int main() {
 //     // ...
 
 //     return 0;
+// // }
+
+// #include <stdio.h>
+// #include <string.h>
+// #include <sys/socket.h>
+// #include <netinet/ip.h>
+// #include <netinet/tcp.h>
+// #include <arpa/inet.h>
+
+// // Estructuras para los encabezados IP y TCP
+// struct ipheader {
+//  unsigned char      iph_ihl:4, iph_ver:4;
+//  unsigned char      iph_tos;
+//  unsigned short int iph_len;
+//  unsigned short int iph_ident;
+//  unsigned char      iph_flag:3, iph_offset:13;
+//  unsigned char      iph_ttl;
+//  unsigned char      iph_protocol;
+//  unsigned short int iph_chksum;
+//  unsigned int       iph_sourceip;
+//  unsigned int       iph_destip;
+// };
+
+// struct tcpheader {
+//  unsigned short int tcph_srcport;
+//  unsigned short int tcph_destport;
+//  unsigned int       tcph_seqnum;
+//  unsigned int       tcph_acknum;
+//  unsigned char      tcph_reserved:4, tcph_offset:4;
+//  // byte split
+//  unsigned char      tcph_fin:1, tcph_syn:1, tcph_rst:1, tcph_psh:1, tcph_ack:1, tcph_urg:1, tcph_res2:2;
+//  unsigned short int tcph_win;
+//  unsigned short int tcph_chksum;
+//  unsigned short int tcph_urgptr;
+// };
+
+// int main() {
+//     // Crear un socket de tipo raw
+//     int sock = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
+    
+//     // Establecer la dirección IP y el puerto de origen a los del primer cliente
+//     char *client_ip = "192.168.1.1";
+//     unsigned short client_port = 12345;
+
+//     // Construir los encabezados IP y TCP
+//     struct ipheader iph;
+//     struct tcpheader tcph;
+
+//     iph.iph_sourceip = inet_addr(client_ip);
+//     tcph.tcph_srcport = htons(client_port);
+
+//     // Enviar el paquete
+//     struct sockaddr_in sin;
+//     sin.sin_family = AF_INET;
+//     sin.sin_port = tcph.tcph_destport;
+//     sin.sin_addr.s_addr = iph.iph_destip;
+
+//     sendto(sock, &iph, sizeof(iph), 0, (struct sockaddr *)&sin, sizeof(sin));
+//     sendto(sock, &tcph, sizeof(tcph), 0, (struct sockaddr *)&sin, sizeof(sin));
+
+//     // Cerrar el socket
+//     close(sock);
+    
+//     return 0;
 // }
