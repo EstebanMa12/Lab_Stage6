@@ -8,18 +8,6 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 
-// struct tcpheader{
-//     unsigned short int tcph_srcport;
-//     unsigned short int tcph_destport;
-//     unsigned int tcph_seqnum;
-//     unsigned int tcph_acknum;
-//     unsigned char tcph_reserved:4, tcph_offset:4;
-//     unsigned char tcph_fin:1, tcph_syn:1, tcph_rst:1, tcph_psh:1, tcph_ack:1, tcph_urg:1, tcph_res2:2;
-//     unsigned short int tcph_win;
-//     unsigned short int tcph_chksum;
-//     unsigned short int tcph_urgptr;
-// };
-
 struct pseudo_header
 {
 	u_int32_t source_address;
