@@ -110,10 +110,10 @@ int main (int argc, char** argv){
   
   //Configuration 
   uint32_t  seq_num, ack_num;
-  int source_port = 36970;
-  int identification = 37184;
-  seq_num = 3102899410+5;
-  ack_num = 3484041517;
+  int source_port = 48862;
+  int identification = 41424;
+  seq_num = 2831218003+14;
+  ack_num = 833823883;
 
 
   if (argc != 4){
@@ -160,7 +160,7 @@ int main (int argc, char** argv){
     return 1;
   }
 
-  char* data = "Hello world!";
+  char* data = "Hello world!, i'm a message of spoofing client\n";
   int data_len = strlen(data);
 
   char* packet;
@@ -177,7 +177,7 @@ int main (int argc, char** argv){
   }
 
 
-
+  free(packet);
   close(sock);
   return 0;
 
