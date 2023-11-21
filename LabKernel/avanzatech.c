@@ -1,4 +1,11 @@
-  asmlinkage long avanzatech(int number, char __user *buffer, size_t length, char __user *dest_buffer, char __user *username, size_t dest_len);
+
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/syscalls.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/fs.h>
 
   asmlinkage long avanzatech (
     int number, 
@@ -48,7 +55,7 @@
       result = -EFAULT;
       goto free_and_exit;
     }
-    
+
     free_and_exit:
       kfree(kernel_buffer);
       kfree(kernel_dest_buffer);
