@@ -27,7 +27,7 @@
     kernel_username = kmalloc(dest_len, GFP_KERNEL);
 
     if (!kernel_buffer || !kernel_dest_buffer || !kernel_username) {
-      result = -ENOMEN;
+      result = -ENOMEM;
       goto free_and_exit;
     }
 
