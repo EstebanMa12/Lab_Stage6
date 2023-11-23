@@ -1,4 +1,6 @@
-#include <cerrno>
+
+#include <linux/kernel.h>
+#include <errno.h>
 
 SYSCALL_DEFINE5(avanzatech, int, number, char __user*, name, size_t, name_length, char __user*,dest_buffer, size_t, dest_len){
   long result;
@@ -7,7 +9,7 @@ SYSCALL_DEFINE5(avanzatech, int, number, char __user*, name, size_t, name_length
   char *kernel_dest_buffer;
 
   //Validate the size of buffers, checking for buffer overflows or underflows.
-  if (number < -1290 || number > 1290 || sizeof(name)!=name_length){
+  if (number < -1290 || number > 1290 || name_length<=0){
     printk("Error: Invalid parameters\n");
     result = -EINVAL;
     goto free_and_exit;
@@ -34,10 +36,10 @@ SYSCALL_DEFINE5(avanzatech, int, number, char __user*, name, size_t, name_length
     goto free_and_exit;
   }
 
-  if (copy_from_user(kernel_dest_buffer, dest_buffer, dest_len)){
-    result = -EFAULT;
-    goto free_and_exit;
-  }
+  // if (copy_from_user(kernel_dest_buffer, dest_buffer, dest_len)){
+  //   result = -EFAULT;
+  //   goto free_and_exit;
+  // }
 
 
   //Implement logic to cube the number.
@@ -45,10 +47,10 @@ SYSCALL_DEFINE5(avanzatech, int, number, char __user*, name, size_t, name_length
 
 
   //Construct a response message like "Hi [username], the cube of [number] is [result]".
-  snprintf(kernel_dest_buffer, dest_len, "Hi %s, the cube of %d is %ld", name, number, num);
+  result = snprintf(kernel_dest_buffer, dest_len, "Hi %s, the cube of %d is %ld", name, number, num);
 
   //Handle errors for invalid inputs, buffer sizes, and read/write permissions.
-  if (snprintf(kernel_dest_buffer, dest_len, "Hi %s, the cube of %d is %ld", name, number, num) >= dest_len) {
+  if (result) >= dest_len) {
     printk("Error: Insufficient buffer space for the response message\n");
     result = -EINVAL;
     goto free_and_exit;
