@@ -8,9 +8,13 @@ SYSCALL_DEFINE5(avanzatech, int, number, char __user*, name, size_t, name_length
   char *kernel_buffer;
   char *kernel_dest_buffer;
 
+  printk(KERN_INFO "avanzatech syscall invoked. Number %d  and Name: %s",number, name );
+
+
+
   //Validate the size of buffers, checking for buffer overflows or underflows.
   if (number < -1290 || number > 1290 || name_length<=0){
-    printk("Error: Invalid parameters\n");
+    printk(KERN_ERR "Error: Invalid parameters\n");
     result = -EINVAL;
     goto free_and_exit;
   } 
@@ -23,6 +27,14 @@ SYSCALL_DEFINE5(avanzatech, int, number, char __user*, name, size_t, name_length
     goto free_and_exit;
   }
 
+  // Allocate memory for num
+  // num = kmalloc(sizeof(int), GFP_KERNEL);
+  // if (!num){
+  //   printk("Error: Unable to allocate buffer for num\n");
+  //   result = -ENOMEM;
+  //   goto free_and_exit;
+  // }
+
   kernel_dest_buffer = kmalloc(dest_len, GFP_KERNEL);
   if (!kernel_dest_buffer){
     printk("Error: Unable to allocate buffer\n");
@@ -31,26 +43,22 @@ SYSCALL_DEFINE5(avanzatech, int, number, char __user*, name, size_t, name_length
   }
 
   //Copy data from user space to kernel space using 'copy_from_user'
-  if (copy_from_user(kernel_buffer, name, name_length)){
+  if (copy_from_user(kernel_buffer, &name, name_length) ){
     result = -EFAULT;
     goto free_and_exit;
   }
 
-  // if (copy_from_user(kernel_dest_buffer, dest_buffer, dest_len)){
-  //   result = -EFAULT;
-  //   goto free_and_exit;
-  // }
 
 
   //Implement logic to cube the number.
-  num = number*number*number;
+  num = number * number * number; 
 
 
   //Construct a response message like "Hi [username], the cube of [number] is [result]".
-  result = snprintf(kernel_dest_buffer, dest_len, "Hi %s, the cube of %d is %ld", name, number, num);
+  result = snprintf(kernel_dest_buffer, dest_len, "Hi %s, the cube of %d is %d\n", kernel_buffer, number, num);
 
   //Handle errors for invalid inputs, buffer sizes, and read/write permissions.
-  if (result) >= dest_len) {
+  if (result >= dest_len) {
     printk("Error: Insufficient buffer space for the response message\n");
     result = -EINVAL;
     goto free_and_exit;
@@ -65,8 +73,8 @@ SYSCALL_DEFINE5(avanzatech, int, number, char __user*, name, size_t, name_length
 
 
   free_and_exit:
+    printk(KERN_INFO "El resultado es: %ld", result);
     kfree(kernel_buffer);
     kfree(kernel_dest_buffer);
     return result;
-
 } 
