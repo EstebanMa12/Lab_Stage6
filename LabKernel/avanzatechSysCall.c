@@ -8,7 +8,7 @@ SYSCALL_DEFINE5(avanzatech, int, number, char __user*, name, size_t, name_length
   char *kernel_buffer;
   char *kernel_dest_buffer;
 
-  printk(KERN_INFO "avanzatech syscall invoked. Number %d  and Name: %s",number, name );
+  printk(KERN_INFO "[avanzatech]: syscall invoked. Number %d  and Name: %s\n",number, name );
 
 
 
@@ -16,7 +16,7 @@ SYSCALL_DEFINE5(avanzatech, int, number, char __user*, name, size_t, name_length
   if (number < -1290 || number > 1290 || name_length<=0){
     printk(KERN_ERR "Error: Invalid parameters\n");
     result = -EINVAL;
-    goto free_and_exit;
+    return -1;
   } 
 
   // Allocation of memory in the kernel space for temporary data
@@ -24,28 +24,22 @@ SYSCALL_DEFINE5(avanzatech, int, number, char __user*, name, size_t, name_length
   if (!kernel_buffer){
     printk("Error: Unable to allocate buffer\n");
     result = -ENOMEM;
-    goto free_and_exit;
+    return -1;
   }
 
-  // Allocate memory for num
-  // num = kmalloc(sizeof(int), GFP_KERNEL);
-  // if (!num){
-  //   printk("Error: Unable to allocate buffer for num\n");
-  //   result = -ENOMEM;
-  //   goto free_and_exit;
-  // }
+
 
   kernel_dest_buffer = kmalloc(dest_len, GFP_KERNEL);
   if (!kernel_dest_buffer){
     printk("Error: Unable to allocate buffer\n");
     result = -ENOMEM;
-    goto free_and_exit;
+    return -1;
   }
-
-  //Copy data from user space to kernel space using 'copy_from_user'
-  if (copy_from_user(kernel_buffer, &name, name_length) ){
+  printk("[avanzatech]: Allocation of memory done\n");  //Copy data from user space to kernel space using 'copy_from_user'
+  if (copy_from_user(kernel_buffer, name, name_length) ){
     result = -EFAULT;
-    goto free_and_exit;
+    kfree(kernel_buffer);
+    kfree(kernel_dest_buffer);
   }
 
 
@@ -53,28 +47,39 @@ SYSCALL_DEFINE5(avanzatech, int, number, char __user*, name, size_t, name_length
   //Implement logic to cube the number.
   num = number * number * number; 
 
+  printk("[avanzatech]: The number is %d", num);
+
 
   //Construct a response message like "Hi [username], the cube of [number] is [result]".
   result = snprintf(kernel_dest_buffer, dest_len, "Hi %s, the cube of %d is %d\n", kernel_buffer, number, num);
+
+  printk("[avanzatech]: The result is %ld", result);
 
   //Handle errors for invalid inputs, buffer sizes, and read/write permissions.
   if (result >= dest_len) {
     printk("Error: Insufficient buffer space for the response message\n");
     result = -EINVAL;
-    goto free_and_exit;
+    kfree(kernel_buffer);
+    kfree(kernel_dest_buffer);
+    return -1;
   }
+
+  printk("[avanzatech]: Handle error for the result done, start with the copy response for user");
+
 
 
   //Copy the response back to `dest_buffer` using `copy_to_user`.
   if(copy_to_user(dest_buffer,kernel_dest_buffer, dest_len)){
     result = -EFAULT;
-    goto free_and_exit;
-  }
-
-
-  free_and_exit:
-    printk(KERN_INFO "El resultado es: %ld", result);
     kfree(kernel_buffer);
     kfree(kernel_dest_buffer);
-    return result;
+    return -1;
+  }
+
+  printk("[avanzatech]: Copy the response back to dest_buffer done");
+
+  printk(KERN_INFO "El resultado es: %ld", result);
+  kfree(kernel_buffer);
+  kfree(kernel_dest_buffer);
+  return result;
 } 

@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/syscall.h>
+#include <syscall.h>
+#include <unistd.h>
 
 #define SYSCALL_NUM 451
 #define BASE_LEN 30
@@ -34,7 +35,7 @@ int main(int argc, char *argv[]){
         free(dest_buffer);
         return -1;
     }
-    printf("Result: %s\n", result);
+    printf("Result: %ld\n", result);
     free(dest_buffer);
 
     return 0;
