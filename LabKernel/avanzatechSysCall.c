@@ -33,7 +33,7 @@ SYSCALL_DEFINE5(avanzatech, int, number, char __user*, name, size_t, name_length
   if (!kernel_dest_buffer){
     printk("Error: Unable to allocate buffer\n");
     result = -ENOMEM;
-    return -1;
+    return result;
   }
   printk("[avanzatech]: Allocation of memory done\n");  //Copy data from user space to kernel space using 'copy_from_user'
   if (copy_from_user(kernel_buffer, name, name_length) ){
@@ -61,7 +61,7 @@ SYSCALL_DEFINE5(avanzatech, int, number, char __user*, name, size_t, name_length
     result = -EINVAL;
     kfree(kernel_buffer);
     kfree(kernel_dest_buffer);
-    return -1;
+    return result;
   }
 
   printk("[avanzatech]: Handle error for the result done, start with the copy response for user");
@@ -73,12 +73,12 @@ SYSCALL_DEFINE5(avanzatech, int, number, char __user*, name, size_t, name_length
     result = -EFAULT;
     kfree(kernel_buffer);
     kfree(kernel_dest_buffer);
-    return -1;
+    return result;
   }
 
   printk("[avanzatech]: Copy the response back to dest_buffer done");
 
-  printk(KERN_INFO "El resultado es: %ld", result);
+  printk(KERN_INFO "El resultado es: %ld\n", result);
   kfree(kernel_buffer);
   kfree(kernel_dest_buffer);
   return result;
